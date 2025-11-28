@@ -2300,4 +2300,4 @@ Try these on any SQL platform (MySQL, PostgreSQL, SQLite):
 
 > 📖 **Source:** These notes are based on CodeHelp's SQL Lecture Notes (LEC-9: SQL in 1-Video), restructured and expanded for interview preparation.
 
-**Good luck with your interviews, Aniket! 🚀**
+**Good luck with your interviews 🚀**
