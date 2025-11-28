@@ -40,11 +40,11 @@ Understanding how SQL commands are categorized helps you think about database op
 ```mermaid
 flowchart TB
     subgraph SQL["SQL Command Types"]
-        DDL["DDL\nData Definition Language"]
-        DQL["DQL/DRL\nData Query Language"]
-        DML["DML\nData Manipulation Language"]
-        DCL["DCL\nData Control Language"]
-        TCL["TCL\nTransaction Control Language"]
+        DDL["DDL  Data Definition Language"]
+        DQL["DQL/DRL  Data Query Language"]
+        DML["DML  Data Manipulation Language"]
+        DCL["DCL  Data Control Language"]
+        TCL["TCL  Transaction Control Language"]
     end
 
     DDL --> CREATE["CREATE"]
@@ -615,12 +615,12 @@ JOINs are essential for working with relational data. This is tested in **every*
 ```mermaid
 flowchart LR
     subgraph JOINS["Types of SQL Joins"]
-        INNER["INNER JOIN\n(Matching rows only)"]
-        LEFT["LEFT JOIN\n(All left + matching right)"]
-        RIGHT["RIGHT JOIN\n(All right + matching left)"]
-        FULL["FULL JOIN\n(All from both tables)"]
-        CROSS["CROSS JOIN\n(Cartesian product)"]
-        SELF["SELF JOIN\n(Table with itself)"]
+        INNER["INNER JOIN  (Matching rows only)"]
+        LEFT["LEFT JOIN  (All left + matching right)"]
+        RIGHT["RIGHT JOIN  (All right + matching left)"]
+        FULL["FULL JOIN  (All from both tables)"]
+        CROSS["CROSS JOIN  (Cartesian product)"]
+        SELF["SELF JOIN  (Table with itself)"]
     end
 ```
 
