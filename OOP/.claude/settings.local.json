@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive OOP README with complete interview preparation notes\n\n- Consolidated all OOP concepts from code examples\n- Added visual diagrams and mermaid charts\n- Structured notes covering: classes, objects, inheritance, polymorphism\n- Included shallow vs deep copy explanations\n- Added constructors, destructors, and memory management\n- Documented all inheritance types with examples\n- Created interview tips and common mistakes section\n- Added practice problems and quick reference tables\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

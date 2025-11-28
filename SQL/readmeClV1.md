@@ -42,8 +42,8 @@ Every database operation falls into one of these four categories. Memorize this 
 ```mermaid
 flowchart LR
     subgraph CRUD["CRUD Operations"]
-        C["CREATE\n(INSERT)"]
-        R["READ\n(SELECT)"]
+        C["CREATE (INSERT)"]
+        R["READ (SELECT)"]
         U["UPDATE"]
         D["DELETE"]
     end
@@ -63,11 +63,11 @@ Understanding how SQL commands are categorized helps you think about database op
 ```mermaid
 flowchart TB
     subgraph SQL["SQL Command Types"]
-        DDL["DDL\nData Definition Language"]
-        DQL["DQL/DRL\nData Query Language"]
-        DML["DML\nData Manipulation Language"]
-        DCL["DCL\nData Control Language"]
-        TCL["TCL\nTransaction Control Language"]
+        DDL["DDL Data Definition Language"]
+        DQL["DQL/DRL Data Query Language"]
+        DML["DML Data Manipulation Language"]
+        DCL["DCL Data Control Language"]
+        TCL["TCL Transaction Control Language"]
     end
 
     DDL --> CREATE["CREATE"]
@@ -154,12 +154,12 @@ COMMIT;  -- Make ALL changes permanent
 
 ```mermaid
 flowchart LR
-    START["START\nTRANSACTION"] --> OP1["Operation 1"]
+    START["START TRANSACTION"] --> OP1["Operation 1"]
     OP1 --> OP2["Operation 2"]
     OP2 --> OP3["Operation N"]
     OP3 --> DECISION{Success?}
-    DECISION -->|Yes| COMMIT["COMMIT\n(Save all)"]
-    DECISION -->|No| ROLLBACK["ROLLBACK\n(Undo all)"]
+    DECISION -->|Yes| COMMIT["COMMIT (Save all)"]
+    DECISION -->|No| ROLLBACK["ROLLBACK (Undo all)"]
 ```
 
 ---
@@ -342,12 +342,12 @@ Constraints are rules enforced on table columns to ensure data accuracy and reli
 ```mermaid
 flowchart TB
     subgraph Constraints["SQL Constraints"]
-        PK["PRIMARY KEY\n• Unique + Not Null\n• One per table"]
-        FK["FOREIGN KEY\n• References other table\n• Multiple allowed"]
-        UQ["UNIQUE\n• No duplicates\n• Can be NULL"]
-        NN["NOT NULL\n• Must have value\n• No empty fields"]
-        DF["DEFAULT\n• Fallback value\n• If not provided"]
-        CK["CHECK\n• Custom validation\n• Boolean condition"]
+        PK["PRIMARY KEY • Unique + Not Null • One per table"]
+        FK["FOREIGN KEY • References other table • Multiple allowed"]
+        UQ["UNIQUE • No duplicates • Can be NULL"]
+        NN["NOT NULL • Must have value • No empty fields"]
+        DF["DEFAULT • Fallback value • If not provided"]
+        CK["CHECK • Custom validation • Boolean condition"]
     end
 ```
 
@@ -521,11 +521,11 @@ ALTER TABLE employees RENAME TO staff;
 ```mermaid
 flowchart LR
     subgraph ALTER["ALTER TABLE Operations"]
-        ADD["ADD\nNew column"]
-        MODIFY["MODIFY\nChange type"]
-        CHANGE["CHANGE\nRename column"]
-        DROP["DROP\nRemove column"]
-        RENAME["RENAME\nRename table"]
+        ADD["ADD New column"]
+        MODIFY["MODIFY Change type"]
+        CHANGE["CHANGE Rename column"]
+        DROP["DROP Remove column"]
+        RENAME["RENAME Rename table"]
     end
 ```
 
@@ -807,7 +807,7 @@ flowchart LR
         G2["Engineering: 3 employees"]
     end
 
-    Before --> |"GROUP BY\ndepartment"| After
+    Before --> |"GROUP BY department"| After
 ```
 
 **Detailed Before/After:**
@@ -894,10 +894,10 @@ HAVING AVG(salary) > 60000;  -- Can use aggregate in HAVING
 
 ```mermaid
 flowchart TD
-    A["FROM employees\n(all rows)"] --> B["GROUP BY department\n(create groups)"]
-    B --> C["Calculate aggregates\nCOUNT, AVG, etc."]
-    C --> D["HAVING COUNT > 10\n(filter groups)"]
-    D --> E["SELECT columns\n(final output)"]
+    A["FROM employees (all rows)"] --> B["GROUP BY department (create groups)"]
+    B --> C["Calculate aggregates COUNT, AVG, etc."]
+    C --> D["HAVING COUNT > 10 (filter groups)"]
+    D --> E["SELECT columns (final output)"]
 ```
 
 ### ⚡ WHERE vs HAVING — Interview Favorite!
@@ -1208,12 +1208,12 @@ JOINs are essential for working with relational data. This is tested in **every*
 ```mermaid
 flowchart TB
     subgraph JOINS["Types of SQL Joins"]
-        INNER["INNER JOIN\n(Matching rows only)"]
-        LEFT["LEFT JOIN\n(All left + matching right)"]
-        RIGHT["RIGHT JOIN\n(All right + matching left)"]
-        FULL["FULL JOIN\n(All from both tables)"]
-        CROSS["CROSS JOIN\n(Cartesian product)"]
-        SELF["SELF JOIN\n(Table with itself)"]
+        INNER["INNER JOIN (Matching rows only)"]
+        LEFT["LEFT JOIN (All left + matching right)"]
+        RIGHT["RIGHT JOIN (All right + matching left)"]
+        FULL["FULL JOIN (All from both tables)"]
+        CROSS["CROSS JOIN (Cartesian product)"]
+        SELF["SELF JOIN (Table with itself)"]
     end
 ```
 
@@ -1572,16 +1572,16 @@ INNER JOIN departments d ON e.dept_id = d.id;
 ```mermaid
 flowchart TB
     subgraph Input["Input Tables"]
-        A["Table A\n(3 rows)"]
-        B["Table B\n(3 rows)"]
+        A["Table A (3 rows)"]
+        B["Table B (3 rows)"]
     end
 
     subgraph Results["JOIN Results"]
-        INNER["INNER: 2 rows\n(only matches)"]
-        LEFT["LEFT: 3 rows\n(all A + matches)"]
-        RIGHT["RIGHT: 3 rows\n(all B + matches)"]
-        FULL["FULL: 4 rows\n(all from both)"]
-        CROSS["CROSS: 9 rows\n(3 × 3 combinations)"]
+        INNER["INNER: 2 rows (only matches)"]
+        LEFT["LEFT: 3 rows (all A + matches)"]
+        RIGHT["RIGHT: 3 rows (all B + matches)"]
+        FULL["FULL: 4 rows (all from both)"]
+        CROSS["CROSS: 9 rows (3 × 3 combinations)"]
     end
 
     A --> INNER
@@ -1614,17 +1614,17 @@ SET operations combine results from multiple SELECT statements **vertically** (r
 ```mermaid
 flowchart LR
     subgraph JOIN["JOIN (Horizontal)"]
-        JA["Table A\nColumns: a, b"]
-        JB["Table B\nColumns: c, d"]
-        JR["Result\nColumns: a, b, c, d"]
+        JA["Table A Columns: a, b"]
+        JB["Table B Columns: c, d"]
+        JR["Result Columns: a, b, c, d"]
         JA --> JR
         JB --> JR
     end
 
     subgraph SET["SET Operation (Vertical)"]
-        SA["Query 1\n3 rows"]
-        SB["Query 2\n2 rows"]
-        SR["Result\n5 rows\n(stacked)"]
+        SA["Query 1 3 rows"]
+        SB["Query 2 2 rows"]
+        SR["Result 5 rows (stacked)"]
         SA --> SR
         SB --> SR
     end
@@ -1745,9 +1745,9 @@ A subquery is a query inside another query. The inner query executes first, and 
 ```mermaid
 flowchart TD
     subgraph Execution["Subquery Execution Order"]
-        INNER["1. INNER Query\n(Executes FIRST)"]
-        RESULT["2. Inner Result\n(Passed to outer)"]
-        OUTER["3. OUTER Query\n(Uses inner result)"]
+        INNER["1. INNER Query (Executes FIRST)"]
+        RESULT["2. Inner Result (Passed to outer)"]
+        OUTER["3. OUTER Query (Uses inner result)"]
         FINAL["4. Final Result"]
     end
 
@@ -1941,11 +1941,11 @@ DROP VIEW IF EXISTS high_earners;
 ```mermaid
 flowchart LR
     subgraph BaseTable["Base Table: employees"]
-        BT["All employee data\n(actual storage)"]
+        BT["All employee data (actual storage)"]
     end
 
     subgraph View["View: high_earners"]
-        V["SELECT ... WHERE salary > 80000\n(stored query, no data)"]
+        V["SELECT ... WHERE salary > 80000 (stored query, no data)"]
     end
 
     subgraph Query["Your Query"]
@@ -1988,15 +1988,15 @@ This is NOT the order you write it, but the order SQL executes it:
 
 ```mermaid
 flowchart TD
-    FROM["1. FROM\nIdentify source tables"]
-    JOIN["2. JOIN\nCombine tables"]
-    WHERE["3. WHERE\nFilter individual rows"]
-    GROUPBY["4. GROUP BY\nCreate groups"]
-    HAVING["5. HAVING\nFilter groups"]
-    SELECT["6. SELECT\nChoose columns"]
-    DISTINCT["7. DISTINCT\nRemove duplicates"]
-    ORDERBY["8. ORDER BY\nSort results"]
-    LIMIT["9. LIMIT\nRestrict row count"]
+    FROM["1. FROM Identify source tables"]
+    JOIN["2. JOIN Combine tables"]
+    WHERE["3. WHERE Filter individual rows"]
+    GROUPBY["4. GROUP BY Create groups"]
+    HAVING["5. HAVING Filter groups"]
+    SELECT["6. SELECT Choose columns"]
+    DISTINCT["7. DISTINCT Remove duplicates"]
+    ORDERBY["8. ORDER BY Sort results"]
+    LIMIT["9. LIMIT Restrict row count"]
 
     FROM --> JOIN --> WHERE --> GROUPBY --> HAVING --> SELECT --> DISTINCT --> ORDERBY --> LIMIT
 ```
