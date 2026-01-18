@@ -2987,6 +2987,471 @@ SELECT month, revenue,
 FROM monthly_sales;
 ```
 
+### Advanced Window Functions for Data Science
+
+These window functions are essential for data scientists performing statistical analysis, building features for ML models, and conducting cohort/funnel analysis.
+
+#### PERCENT_RANK and CUME_DIST (Percentile Calculations)
+
+```sql
+-- PERCENT_RANK: Relative rank as a percentage (0 to 1)
+-- Formula: (rank - 1) / (total_rows - 1)
+
+SELECT name, salary,
+    PERCENT_RANK() OVER (ORDER BY salary) as percentile_rank,
+    CUME_DIST() OVER (ORDER BY salary) as cumulative_dist
+FROM employees;
+
+-- With sample data:
+-- +----+---------+--------+
+-- | id | name    | salary |
+-- +----+---------+--------+
+-- | 1  | Bob     | 55000  |
+-- | 2  | Diana   | 60000  |
+-- | 3  | Charlie | 70000  |
+-- | 4  | Eve     | 75000  |
+-- | 5  | Alice   | 80000  |
+-- +----+---------+--------+
+
+-- Result:
+-- +---------+--------+-----------------+------------------+
+-- | name    | salary | percentile_rank | cumulative_dist  |
+-- +---------+--------+-----------------+------------------+
+-- | Bob     | 55000  | 0.00            | 0.20             |  <-- Lowest (0th percentile)
+-- | Diana   | 60000  | 0.25            | 0.40             |  <-- 25th percentile
+-- | Charlie | 70000  | 0.50            | 0.60             |  <-- 50th percentile (median position)
+-- | Eve     | 75000  | 0.75            | 0.80             |  <-- 75th percentile
+-- | Alice   | 80000  | 1.00            | 1.00             |  <-- 100th percentile (highest)
+-- +---------+--------+-----------------+------------------+
+
+-- PERCENT_RANK vs CUME_DIST:
+-- +------------------------------------------------------------------+
+-- |  PERCENT_RANK: What % of values are BELOW this row?              |
+-- |  CUME_DIST:    What % of values are AT OR BELOW this row?        |
+-- +------------------------------------------------------------------+
+-- |                                                                   |
+-- |  Example with 5 rows (rank 1-5):                                 |
+-- |  Row 1: PERCENT_RANK = (1-1)/(5-1) = 0.00                        |
+-- |         CUME_DIST = 1/5 = 0.20                                   |
+-- |  Row 3: PERCENT_RANK = (3-1)/(5-1) = 0.50                        |
+-- |         CUME_DIST = 3/5 = 0.60                                   |
+-- |                                                                   |
+-- +------------------------------------------------------------------+
+```
+
+**Use Case: Identifying outliers based on percentile**
+
+```sql
+-- Find employees with salary in top 10% or bottom 10%
+SELECT name, salary, percentile_rank,
+    CASE 
+        WHEN percentile_rank >= 0.90 THEN 'Top 10%'
+        WHEN percentile_rank <= 0.10 THEN 'Bottom 10%'
+        ELSE 'Middle 80%'
+    END as salary_tier
+FROM (
+    SELECT name, salary,
+        PERCENT_RANK() OVER (ORDER BY salary) as percentile_rank
+    FROM employees
+) ranked;
+```
+
+#### NTH_VALUE - Get Specific Row Value
+
+```sql
+-- NTH_VALUE returns the value at the nth row in the window
+
+SELECT name, department, salary,
+    NTH_VALUE(name, 1) OVER (
+        PARTITION BY department 
+        ORDER BY salary DESC
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as top_earner,
+    NTH_VALUE(name, 2) OVER (
+        PARTITION BY department 
+        ORDER BY salary DESC
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as second_earner
+FROM employees;
+
+-- Result:
+-- +---------+-------------+--------+------------+---------------+
+-- | name    | department  | salary | top_earner | second_earner |
+-- +---------+-------------+--------+------------+---------------+
+-- | Alice   | Engineering | 80000  | Alice      | Eve           |
+-- | Eve     | Engineering | 75000  | Alice      | Eve           |
+-- | Charlie | Engineering | 70000  | Alice      | Eve           |
+-- | Diana   | Sales       | 60000  | Diana      | Bob           |
+-- | Bob     | Sales       | 55000  | Diana      | Bob           |
+-- +---------+-------------+--------+------------+---------------+
+
+-- Note: Like LAST_VALUE, NTH_VALUE needs the full frame specification!
+```
+
+#### Named Windows (WINDOW Clause)
+
+When using the same window definition multiple times, define it once with the WINDOW clause:
+
+```sql
+-- Without WINDOW clause (repetitive):
+SELECT name, salary, department,
+    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as rn,
+    RANK() OVER (PARTITION BY department ORDER BY salary DESC) as rnk,
+    SUM(salary) OVER (PARTITION BY department ORDER BY salary DESC) as running_sum
+FROM employees;
+
+-- With WINDOW clause (cleaner):
+SELECT name, salary, department,
+    ROW_NUMBER() OVER w as rn,
+    RANK() OVER w as rnk,
+    SUM(salary) OVER w as running_sum
+FROM employees
+WINDOW w AS (PARTITION BY department ORDER BY salary DESC);
+
+-- Multiple named windows:
+SELECT name, salary, department,
+    RANK() OVER by_dept_salary as dept_rank,
+    RANK() OVER by_salary as overall_rank,
+    AVG(salary) OVER by_dept as dept_avg
+FROM employees
+WINDOW 
+    by_dept_salary AS (PARTITION BY department ORDER BY salary DESC),
+    by_salary AS (ORDER BY salary DESC),
+    by_dept AS (PARTITION BY department);
+```
+
+### Data Science Window Function Patterns
+
+#### Pattern 1: Cumulative Distribution for Feature Engineering
+
+```sql
+-- Create percentile features for ML models
+SELECT 
+    user_id,
+    total_purchases,
+    PERCENT_RANK() OVER (ORDER BY total_purchases) as purchase_percentile,
+    NTILE(10) OVER (ORDER BY total_purchases) as purchase_decile,
+    CASE 
+        WHEN PERCENT_RANK() OVER (ORDER BY total_purchases) >= 0.8 THEN 'high_value'
+        WHEN PERCENT_RANK() OVER (ORDER BY total_purchases) >= 0.5 THEN 'medium_value'
+        ELSE 'low_value'
+    END as customer_segment
+FROM customer_summary;
+```
+
+#### Pattern 2: Rolling Statistics (Moving Averages, Std Dev)
+
+```sql
+-- 7-day and 30-day rolling metrics for time series analysis
+SELECT 
+    date,
+    daily_revenue,
+    AVG(daily_revenue) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as rolling_7day_avg,
+    AVG(daily_revenue) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+    ) as rolling_30day_avg,
+    STDDEV(daily_revenue) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+    ) as rolling_30day_stddev
+FROM daily_sales;
+
+-- Result helps identify trends and anomalies:
+-- +------------+---------------+------------------+-------------------+--------------------+
+-- | date       | daily_revenue | rolling_7day_avg | rolling_30day_avg | rolling_30day_stddev|
+-- +------------+---------------+------------------+-------------------+--------------------+
+-- | 2024-01-01 | 10000         | 10000.00         | 10000.00          | NULL               |
+-- | 2024-01-02 | 12000         | 11000.00         | 11000.00          | 1414.21            |
+-- | 2024-01-03 | 8000          | 10000.00         | 10000.00          | 2000.00            |
+-- | ...        | ...           | ...              | ...               | ...                |
+-- +------------+---------------+------------------+-------------------+--------------------+
+```
+
+#### Pattern 3: Sessionization (Gap Analysis)
+
+```sql
+-- Identify user sessions based on inactivity gaps (30 minutes)
+WITH events_with_gaps AS (
+    SELECT 
+        user_id,
+        event_time,
+        event_type,
+        LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time) as prev_event_time,
+        EXTRACT(EPOCH FROM (
+            event_time - LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time)
+        )) / 60 as minutes_since_last
+    FROM user_events
+),
+sessions_marked AS (
+    SELECT *,
+        CASE WHEN minutes_since_last IS NULL OR minutes_since_last > 30 THEN 1 ELSE 0 END as new_session
+    FROM events_with_gaps
+)
+SELECT 
+    user_id,
+    event_time,
+    event_type,
+    SUM(new_session) OVER (PARTITION BY user_id ORDER BY event_time) as session_id
+FROM sessions_marked;
+
+-- Result:
+-- +---------+---------------------+------------+------------+
+-- | user_id | event_time          | event_type | session_id |
+-- +---------+---------------------+------------+------------+
+-- | 1       | 2024-01-01 10:00:00 | pageview   | 1          |  <-- Session 1 starts
+-- | 1       | 2024-01-01 10:05:00 | click      | 1          |
+-- | 1       | 2024-01-01 10:10:00 | purchase   | 1          |
+-- | 1       | 2024-01-01 14:00:00 | pageview   | 2          |  <-- Session 2 (>30 min gap)
+-- | 1       | 2024-01-01 14:02:00 | click      | 2          |
+-- +---------+---------------------+------------+------------+
+```
+
+#### Pattern 4: Cohort Analysis (Retention)
+
+```sql
+-- Calculate user retention by signup cohort
+WITH user_activity AS (
+    SELECT 
+        u.user_id,
+        DATE_TRUNC('month', u.signup_date) as cohort_month,
+        DATE_TRUNC('month', a.activity_date) as activity_month
+    FROM users u
+    JOIN user_activities a ON u.user_id = a.user_id
+),
+cohort_size AS (
+    SELECT cohort_month, COUNT(DISTINCT user_id) as cohort_users
+    FROM user_activity
+    GROUP BY cohort_month
+),
+retention AS (
+    SELECT 
+        ua.cohort_month,
+        ua.activity_month,
+        COUNT(DISTINCT ua.user_id) as active_users,
+        EXTRACT(MONTH FROM AGE(ua.activity_month, ua.cohort_month)) as months_since_signup
+    FROM user_activity ua
+    GROUP BY ua.cohort_month, ua.activity_month
+)
+SELECT 
+    r.cohort_month,
+    r.months_since_signup,
+    r.active_users,
+    cs.cohort_users,
+    ROUND(100.0 * r.active_users / cs.cohort_users, 2) as retention_pct
+FROM retention r
+JOIN cohort_size cs ON r.cohort_month = cs.cohort_month
+ORDER BY r.cohort_month, r.months_since_signup;
+
+-- Result (Cohort Retention Table):
+-- +--------------+--------------------+--------------+--------------+---------------+
+-- | cohort_month | months_since_signup| active_users | cohort_users | retention_pct |
+-- +--------------+--------------------+--------------+--------------+---------------+
+-- | 2024-01-01   | 0                  | 1000         | 1000         | 100.00        |
+-- | 2024-01-01   | 1                  | 450          | 1000         | 45.00         |
+-- | 2024-01-01   | 2                  | 320          | 1000         | 32.00         |
+-- | 2024-02-01   | 0                  | 1200         | 1200         | 100.00        |
+-- | 2024-02-01   | 1                  | 580          | 1200         | 48.33         |
+-- +--------------+--------------------+--------------+--------------+---------------+
+```
+
+#### Pattern 5: Funnel Analysis with Window Functions
+
+```sql
+-- E-commerce funnel: view -> add_to_cart -> checkout -> purchase
+WITH funnel_events AS (
+    SELECT 
+        user_id,
+        session_id,
+        event_type,
+        event_time,
+        LEAD(event_type) OVER (
+            PARTITION BY user_id, session_id 
+            ORDER BY event_time
+        ) as next_event
+    FROM events
+    WHERE event_type IN ('view', 'add_to_cart', 'checkout', 'purchase')
+),
+funnel_steps AS (
+    SELECT 
+        event_type as step,
+        COUNT(DISTINCT user_id || '-' || session_id) as sessions
+    FROM funnel_events
+    GROUP BY event_type
+)
+SELECT 
+    step,
+    sessions,
+    FIRST_VALUE(sessions) OVER (ORDER BY 
+        CASE step 
+            WHEN 'view' THEN 1 
+            WHEN 'add_to_cart' THEN 2 
+            WHEN 'checkout' THEN 3 
+            WHEN 'purchase' THEN 4 
+        END
+    ) as top_of_funnel,
+    ROUND(100.0 * sessions / FIRST_VALUE(sessions) OVER (ORDER BY 
+        CASE step 
+            WHEN 'view' THEN 1 
+            WHEN 'add_to_cart' THEN 2 
+            WHEN 'checkout' THEN 3 
+            WHEN 'purchase' THEN 4 
+        END
+    ), 2) as conversion_rate
+FROM funnel_steps
+ORDER BY CASE step 
+    WHEN 'view' THEN 1 
+    WHEN 'add_to_cart' THEN 2 
+    WHEN 'checkout' THEN 3 
+    WHEN 'purchase' THEN 4 
+END;
+
+-- Result:
+-- +-------------+----------+---------------+-----------------+
+-- | step        | sessions | top_of_funnel | conversion_rate |
+-- +-------------+----------+---------------+-----------------+
+-- | view        | 10000    | 10000         | 100.00          |
+-- | add_to_cart | 3500     | 10000         | 35.00           |
+-- | checkout    | 1200     | 10000         | 12.00           |
+-- | purchase    | 800      | 10000         | 8.00            |
+-- +-------------+----------+---------------+-----------------+
+```
+
+#### Pattern 6: Gap and Island Detection (Consecutive Events)
+
+```sql
+-- Find consecutive login streaks for gamification
+WITH login_groups AS (
+    SELECT 
+        user_id,
+        login_date,
+        login_date - (ROW_NUMBER() OVER (
+            PARTITION BY user_id 
+            ORDER BY login_date
+        ))::integer as group_id
+    FROM daily_logins
+)
+SELECT 
+    user_id,
+    MIN(login_date) as streak_start,
+    MAX(login_date) as streak_end,
+    COUNT(*) as streak_length
+FROM login_groups
+GROUP BY user_id, group_id
+HAVING COUNT(*) >= 3  -- Only streaks of 3+ days
+ORDER BY user_id, streak_start;
+
+-- How it works:
+-- login_date: 2024-01-01, 2024-01-02, 2024-01-03, 2024-01-05, 2024-01-06
+-- row_number:     1           2           3           4           5
+-- date - rn:   2023-12-31  2023-12-31  2023-12-31  2024-01-01  2024-01-01
+--              └─────────group 1─────────┘          └───group 2───┘
+-- Consecutive dates get the same group_id!
+```
+
+#### Pattern 7: Time-Based Comparison (Period over Period)
+
+```sql
+-- Compare metrics across multiple time periods
+SELECT 
+    date,
+    revenue,
+    -- Day over day
+    LAG(revenue, 1) OVER (ORDER BY date) as prev_day_revenue,
+    ROUND(100.0 * (revenue - LAG(revenue, 1) OVER (ORDER BY date)) / 
+        NULLIF(LAG(revenue, 1) OVER (ORDER BY date), 0), 2) as dod_change_pct,
+    -- Week over week
+    LAG(revenue, 7) OVER (ORDER BY date) as prev_week_revenue,
+    ROUND(100.0 * (revenue - LAG(revenue, 7) OVER (ORDER BY date)) / 
+        NULLIF(LAG(revenue, 7) OVER (ORDER BY date), 0), 2) as wow_change_pct,
+    -- Month over month (approx 30 days)
+    LAG(revenue, 30) OVER (ORDER BY date) as prev_month_revenue,
+    ROUND(100.0 * (revenue - LAG(revenue, 30) OVER (ORDER BY date)) / 
+        NULLIF(LAG(revenue, 30) OVER (ORDER BY date), 0), 2) as mom_change_pct
+FROM daily_revenue
+ORDER BY date DESC
+LIMIT 30;
+```
+
+### Window Function Performance Tips
+
+```sql
+-- 1. Use FILTER clause with aggregates (PostgreSQL 9.4+)
+SELECT 
+    date,
+    COUNT(*) FILTER (WHERE status = 'completed') OVER (
+        ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as completed_last_7_days,
+    COUNT(*) FILTER (WHERE status = 'failed') OVER (
+        ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as failed_last_7_days
+FROM orders;
+
+-- 2. Avoid multiple passes with named windows
+SELECT *
+FROM (
+    SELECT 
+        id, name, salary, department,
+        AVG(salary) OVER dept_window as dept_avg,
+        MAX(salary) OVER dept_window as dept_max,
+        COUNT(*) OVER dept_window as dept_count
+    FROM employees
+    WINDOW dept_window AS (PARTITION BY department)
+) subq
+WHERE salary > dept_avg;
+
+-- 3. Index columns used in PARTITION BY and ORDER BY
+CREATE INDEX idx_employee_dept_salary ON employees(department, salary DESC);
+```
+
+### Window Functions Quick Reference
+
+```
++------------------------------------------------------------------+
+|                    WINDOW FUNCTION QUICK REFERENCE                |
++------------------------------------------------------------------+
+| RANKING FUNCTIONS:                                                |
+|   ROW_NUMBER()  - Unique sequential number (1,2,3,4...)          |
+|   RANK()        - Rank with gaps for ties (1,2,2,4...)           |
+|   DENSE_RANK()  - Rank without gaps (1,2,2,3...)                 |
+|   NTILE(n)      - Divide into n buckets                          |
+|                                                                   |
+| PERCENTILE FUNCTIONS:                                             |
+|   PERCENT_RANK() - Relative rank as 0-1 (% below current row)    |
+|   CUME_DIST()    - Cumulative distribution (% at or below)       |
+|                                                                   |
+| VALUE FUNCTIONS:                                                  |
+|   LAG(col, n, default)   - Value from n rows before              |
+|   LEAD(col, n, default)  - Value from n rows after               |
+|   FIRST_VALUE(col)       - First value in window                 |
+|   LAST_VALUE(col)        - Last value in window                  |
+|   NTH_VALUE(col, n)      - Nth value in window                   |
+|                                                                   |
+| AGGREGATE FUNCTIONS (as window functions):                        |
+|   SUM(), AVG(), COUNT(), MIN(), MAX(), STDDEV(), VARIANCE()      |
+|                                                                   |
+| FRAME SPECIFICATIONS:                                             |
+|   ROWS BETWEEN x AND y                                           |
+|   RANGE BETWEEN x AND y                                          |
+|   GROUPS BETWEEN x AND y  (PostgreSQL 11+)                       |
+|                                                                   |
+|   Where x and y can be:                                          |
+|   - UNBOUNDED PRECEDING                                          |
+|   - n PRECEDING                                                  |
+|   - CURRENT ROW                                                  |
+|   - n FOLLOWING                                                  |
+|   - UNBOUNDED FOLLOWING                                          |
++------------------------------------------------------------------+
+```
+
+> **Data Science Interview Tip:** Be ready to explain when to use ROWS vs RANGE vs GROUPS in frame specifications:
+> - **ROWS**: Physical rows (most common, predictable)
+> - **RANGE**: Logical range based on ORDER BY value (handles ties together)
+> - **GROUPS**: Groups of peer rows (PostgreSQL 11+)
+
 ---
 
 ## Views - Virtual Tables
