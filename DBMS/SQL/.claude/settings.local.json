@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nEnhance PostgreSQL guide and add PostgreSQL vs MySQL comparison\n\n- Enhanced readme-psql.md with detailed theory and visual examples\n- Added step-by-step query execution visualizations\n- Added before/after table examples for better understanding\n- Created pg-vs-mysql.md with comprehensive syntax and feature comparison\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)"
+    ]
+  }
+}
